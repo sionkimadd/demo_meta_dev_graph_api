@@ -22,6 +22,22 @@
                 <option value="">Select a page</option>
             </select>
             <textarea id="postMessage" placeholder="message..." class="input-field"></textarea>
+            
+            <div class="post-options">
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="postType" value="now" checked> Now
+                    </label>
+                    <label>
+                        <input type="radio" name="postType" value="scheduled"> Later
+                    </label>
+                </div>
+                <div id="scheduleTimeWrapper" style="display: none;">
+                    <input type="datetime-local" id="scheduledTime" class="input-field">
+                    <p class="schedule-hint">10 min ~ 6 m</p>
+                </div>
+            </div>
+
             <button id="submitPost">Post to Facebook</button>
             <pre id="postResult"></pre>
         </div>

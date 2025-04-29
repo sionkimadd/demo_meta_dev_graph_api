@@ -52,3 +52,34 @@ textarea.input-field {
     min-height: 100px;
     resize: vertical;
 }
+
+.post-options {
+    margin: 15px 0;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.radio-group {
+    margin-bottom: 15px;
+}
+
+.radio-group label {
+    margin-right: 20px;
+    cursor: pointer;
+}
+
+.radio-group input[type="radio"] {
+    margin-right: 5px;
+}
+
+#scheduleTimeWrapper {
+    padding: 10px 0;
+}
+
+.schedule-hint {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}

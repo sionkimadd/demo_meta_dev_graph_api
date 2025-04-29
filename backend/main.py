@@ -98,7 +98,7 @@ async def facebook_pages(user_id: str):
     return JSONResponse(pages_data)
 
 @app.post("/facebook/pages/{page_id}/feed")
-async def create_page_post(page_id: str, user_id: str, message: str):
+async def create_page_post(page_id: str, user_id: str, message: str, scheduled_time: int = None):
     page_doc_ref = (
         db.collection("users")
         .document(user_id)
@@ -115,6 +115,11 @@ async def create_page_post(page_id: str, user_id: str, message: str):
         "message": message,
         "access_token": decrpted_token
     }
+    
+    if scheduled_time:
+        post_params["scheduled_publish_time"] = scheduled_time
+        post_params["published"] = False
+    
     post_res = requests.post(f"https://graph.facebook.com/v22.0/{page_id}/feed", params=post_params)
     if not post_res.ok:
         raise HTTPException(status_code=post_res.status_code, detail=post_res.text)
