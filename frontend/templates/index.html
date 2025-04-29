@@ -16,6 +16,15 @@
 
         <button id="fetchFbPagesBtn" style="display:none;">Retrive FB pages</button>
         <pre id="fbPagesOutput"></pre>
+
+        <div id="postForm" style="display:none;" class="post-form">
+            <select id="pageSelect" class="input-field">
+                <option value="">Select a page</option>
+            </select>
+            <textarea id="postMessage" placeholder="message..." class="input-field"></textarea>
+            <button id="submitPost">Post to Facebook</button>
+            <pre id="postResult"></pre>
+        </div>
     </div>
     <script src="/static/script.js"></script>
 </body>

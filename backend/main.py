@@ -96,3 +96,27 @@ async def facebook_pages(user_id: str):
                 print(f"Fail to store (page_id: {page['id']}): {str(e)}")
     
     return JSONResponse(pages_data)
+
+@app.post("/facebook/pages/{page_id}/feed")
+async def create_page_post(page_id: str, user_id: str, message: str):
+    page_doc_ref = (
+        db.collection("users")
+        .document(user_id)
+        .collection("fb_pages")
+        .document(page_id)
+    )
+    page_doc = page_doc_ref.get()
+    if not page_doc.exists:
+        raise HTTPException(status_code=404, detail="Not found fb_pages")
+    
+    page_token = page_doc.to_dict().get("page_token")
+    decrpted_token = fernet.decrypt(page_token.encode()).decode()
+    post_params = {
+        "message": message,
+        "access_token": decrpted_token
+    }
+    post_res = requests.post(f"https://graph.facebook.com/v22.0/{page_id}/feed", params=post_params)
+    if not post_res.ok:
+        raise HTTPException(status_code=post_res.status_code, detail=post_res.text)
+    
+    return JSONResponse(post_res.json())
