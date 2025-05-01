@@ -15,6 +15,7 @@ if (fbStatus === "connected" && userId) {
   document.getElementById("fetchFbPagesBtn").style.display = "inline-block";
   document.getElementById("postForm").style.display = "block";
   document.getElementById("imagePostForm").style.display = "block";
+  document.getElementById("videoPostForm").style.display = "block";
 }
 
 document.getElementById("fetchFbProfileBtn").addEventListener("click", async () => {
@@ -41,8 +42,10 @@ document.getElementById("fetchFbPagesBtn").addEventListener("click", async () =>
     
     const pageSelect = document.getElementById("pageSelect");
     const imagePageSelect = document.getElementById("imagePageSelect");
+    const videoPageSelect = document.getElementById("videoPageSelect");
     pageSelect.innerHTML = '<option value="">Select a page</option>';
     imagePageSelect.innerHTML = '<option value="">Select a page</option>';
+    videoPageSelect.innerHTML = '<option value="">Select a page</option>';
     data.data.forEach(page => {
         const option = document.createElement("option");
         option.value = page.id;
@@ -50,6 +53,7 @@ document.getElementById("fetchFbPagesBtn").addEventListener("click", async () =>
         
         pageSelect.appendChild(option.cloneNode(true));
         imagePageSelect.appendChild(option.cloneNode(true));
+        videoPageSelect.appendChild(option.cloneNode(true));
     });
   } catch (e) {
     document.getElementById("statusMessage").innerText = "FB pages error: " + e.message;
@@ -90,7 +94,10 @@ document.getElementById("submitPost").addEventListener("click", async () => {
         return;
     }
     
-    let endpoint = `/facebook/pages/${pageId}/feed?user_id=${userId}&message=${encodeURIComponent(message)}`;
+    let formData = new FormData();
+    formData.append('message', message);
+    
+    let endpoint = `/facebook/pages/${pageId}/feed?user_id=${userId}`;
     
     if (postType === 'scheduled') {
         const scheduledTime = document.getElementById("scheduledTime").value;
@@ -112,13 +119,14 @@ document.getElementById("submitPost").addEventListener("click", async () => {
             return;
         }
         
-        endpoint += `&scheduled_time=${scheduledTimestamp}`;
+        formData.append('scheduled_time', String(scheduledTimestamp));
     }
     
     document.getElementById("statusMessage").innerText = "Loading...";
     try {
         const res = await fetch(endpoint, {
-            method: 'POST'
+            method: 'POST',
+            body: formData
         });
         
         if (!res.ok) throw new Error(await res.text());
@@ -175,11 +183,11 @@ document.getElementById("submitImagePost").addEventListener("click", async () =>
     
     let formData = new FormData();
     formData.append('image', imageFile);
+    if (caption && caption.trim()) {
+        formData.append('caption', caption.trim());
+    }
     
     let endpoint = `/facebook/pages/${pageId}/photos?user_id=${userId}`;
-    if (caption && caption.trim()) {
-        endpoint += `&caption=${encodeURIComponent(caption.trim())}`;
-    }
     
     if (postType === 'scheduled') {
         const scheduledTime = document.getElementById("imageScheduledTime").value;
@@ -201,7 +209,7 @@ document.getElementById("submitImagePost").addEventListener("click", async () =>
             return;
         }
         
-        endpoint += `&scheduled_time=${scheduledTimestamp}`;
+        formData.append('scheduled_time', String(scheduledTimestamp));
     }
     
     document.getElementById("statusMessage").innerText = "Uploading...";
@@ -226,5 +234,101 @@ document.getElementById("submitImagePost").addEventListener("click", async () =>
         }
     } catch (e) {
         document.getElementById("statusMessage").innerText = "Upload error: " + e.message;
+    }
+});
+
+document.querySelectorAll('input[name="videoPostType"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const scheduleWrapper = document.getElementById('videoScheduleTimeWrapper');
+        if (this.value === 'scheduled') {
+            scheduleWrapper.style.display = 'block';
+            const minTime = new Date(Date.now() + 10 * 60 * 1000);
+            const year = minTime.getFullYear();
+            const month = String(minTime.getMonth() + 1).padStart(2, '0');
+            const day = String(minTime.getDate()).padStart(2, '0');
+            const hours = String(minTime.getHours()).padStart(2, '0');
+            const minutes = String(minTime.getMinutes()).padStart(2, '0');
+            const defaultTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+            document.getElementById('videoScheduledTime').value = defaultTime;
+        } else {
+            scheduleWrapper.style.display = 'none';
+        }
+    });
+});
+
+document.getElementById("submitVideoPost").addEventListener("click", async () => {
+    const pageId = document.getElementById("videoPageSelect").value;
+    const title = document.getElementById("videoTitle").value;
+    const description = document.getElementById("videoDescription").value;
+    const postType = document.querySelector('input[name="videoPostType"]:checked').value;
+    const videoFile = document.getElementById("videoUpload").files[0];
+    
+    if (!pageId) {
+        alert("Select a page");
+        return;
+    }
+    
+    if (!videoFile) {
+        alert("Select a video file");
+        return;
+    }
+    
+    let formData = new FormData();
+    formData.append('video', videoFile);
+    if (title && title.trim()) {
+        formData.append('title', title.trim());
+    }
+    if (description && description.trim()) {
+        formData.append('description', description.trim());
+    }
+    
+    let endpoint = `/facebook/pages/${pageId}/videos?user_id=${userId}`;
+    
+    if (postType === 'scheduled') {
+        const scheduledTime = document.getElementById("videoScheduledTime").value;
+        if (!scheduledTime) {
+            alert("Set a scheduled time");
+            return;
+        }
+        
+        const scheduledTimestamp = Math.floor(new Date(scheduledTime).getTime() / 1000);
+        const now = Math.floor(Date.now() / 1000);
+        
+        if (scheduledTimestamp < now + 600) {
+            alert("At least 10 minutes later");
+            return;
+        }
+        
+        if (scheduledTimestamp > now + 180 * 24 * 3600) {
+            alert("At most 180 days before");
+            return;
+        }
+        
+        formData.append('scheduled_time', scheduledTimestamp);
+    }
+    
+    document.getElementById("statusMessage").innerText = "Uploading video...";
+    try {
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        document.getElementById("videoPostResult").innerText = JSON.stringify(data, null, 2);
+        document.getElementById("statusMessage").innerText = 
+            postType === 'scheduled' ? "Video scheduled!" : "Video uploaded!";
+        
+        document.getElementById("videoTitle").value = "";
+        document.getElementById("videoDescription").value = "";
+        document.getElementById("videoUpload").value = "";
+        if (postType === 'scheduled') {
+            document.getElementById("videoScheduledTime").value = "";
+            document.querySelector('input[value="now"]').checked = true;
+            document.getElementById("videoScheduleTimeWrapper").style.display = 'none';
+        }
+    } catch (e) {
+        document.getElementById("statusMessage").innerText = "Video upload error: " + e.message;
     }
 });

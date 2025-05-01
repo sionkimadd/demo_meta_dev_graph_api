@@ -1,9 +1,10 @@
+from typing import Optional
 from dotenv import load_dotenv
 
 load_dotenv()
 
 import os
-from fastapi import FastAPI, HTTPException, Request, UploadFile, File
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form
 from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -98,7 +99,12 @@ async def facebook_pages(user_id: str):
     return JSONResponse(pages_data)
 
 @app.post("/facebook/pages/{page_id}/feed")
-async def create_page_post(page_id: str, user_id: str, message: str, scheduled_time: int = None):
+async def create_page_post(
+    page_id: str,
+    user_id: str,
+    message: str = Form(...),
+    scheduled_time: Optional[int] = Form(None)
+):
     page_doc_ref = (
         db.collection("users")
         .document(user_id)
@@ -127,7 +133,13 @@ async def create_page_post(page_id: str, user_id: str, message: str, scheduled_t
     return JSONResponse(post_res.json())
 
 @app.post("/facebook/pages/{page_id}/photos")
-async def create_page_post_with_photos(page_id: str, user_id: str, image: UploadFile = File(...), caption: str = None, scheduled_time: int = None):
+async def create_page_post_with_photos(
+    page_id: str,
+    user_id: str,
+    image: UploadFile = File(...),
+    caption: Optional[str] = Form(None),
+    scheduled_time: Optional[int] = Form(None)
+):
     allowed_extensions = {'.jpg', '.jpeg', '.png', '.gif'}
     file_extension = os.path.splitext(image.filename)[1].lower()
     if file_extension not in allowed_extensions:
@@ -180,3 +192,59 @@ async def create_page_post_with_photos(page_id: str, user_id: str, image: Upload
         raise HTTPException(status_code=post_res.status_code, detail=post_res.text)
     
     return JSONResponse(post_res.json())
+
+@app.post("/facebook/pages/{page_id}/videos")
+async def upload_facebook_video(
+    page_id: str,
+    user_id: str,
+    video: UploadFile = File(...),
+    title: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    scheduled_time: Optional[int] = Form(None)
+):
+    allowed_extensions = {".mp4", ".mov"}
+    file_extension = os.path.splitext(video.filename)[1].lower()
+    if file_extension not in allowed_extensions:
+        raise HTTPException(status_code=400, detail="mp4, mov only")
+
+    page_doc_ref = (
+        db.collection("users")
+        .document(user_id)
+        .collection("fb_pages")
+        .document(page_id)
+    )
+    page_doc = page_doc_ref.get()
+    if not page_doc.exists:
+        raise HTTPException(status_code=404, detail="Page not found")
+
+    page_token = page_doc.to_dict().get("page_token")
+    decrypted_token = fernet.decrypt(page_token.encode()).decode()
+
+    temp_path = f"temp_{video.filename}"
+    with open(temp_path, "wb") as out_file:
+        content = await video.read()
+        out_file.write(content)
+
+    with open(temp_path, "rb") as file:
+        files = {
+            "source": (video.filename, file, video.content_type)
+        }
+        post_params = {
+            "access_token": decrypted_token
+        }
+        if title:
+            post_params["title"] = title
+        if description:
+            post_params["description"] = description
+        if scheduled_time:
+            post_params["scheduled_publish_time"] = scheduled_time
+            post_params["published"] = False
+
+        response = requests.post(f"https://graph.facebook.com/v22.0/{page_id}/videos", params=post_params, files=files)
+
+    os.remove(temp_path)
+
+    if not response.ok:
+        raise HTTPException(status_code=response.status_code, detail=response.text)
+
+    return JSONResponse(response.json())

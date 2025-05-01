@@ -70,6 +70,36 @@
             <button id="submitImagePost">Post Image to Facebook</button>
             <pre id="imagePostResult"></pre>
         </div>
+
+        <div id="videoPostForm" style="display:none;" class="post-form">
+            <h3>Video Post</h3>
+            <select id="videoPageSelect" class="input-field">
+                <option value="">Select a page</option>
+            </select>
+            <div class="image-upload">
+                <input type="file" id="videoUpload" accept="video/*" class="input-field">
+            </div>
+            <input type="text" id="videoTitle" placeholder="Video title..." class="input-field" required>
+            <textarea id="videoDescription" placeholder="Write a description..." class="input-field"></textarea>
+            
+            <div class="post-options">
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="videoPostType" value="now" checked> Now
+                    </label>
+                    <label>
+                        <input type="radio" name="videoPostType" value="scheduled"> Later
+                    </label>
+                </div>
+                <div id="videoScheduleTimeWrapper" style="display: none;">
+                    <input type="datetime-local" id="videoScheduledTime" class="input-field">
+                    <p class="schedule-hint">10 min ~ 6 m</p>
+                </div>
+            </div>
+
+            <button id="submitVideoPost">Post Video to Facebook</button>
+            <pre id="videoPostResult"></pre>
+        </div>
     </div>
     <script src="/static/script.js"></script>
 </body>
