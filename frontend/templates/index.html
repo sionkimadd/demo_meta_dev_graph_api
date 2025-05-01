@@ -41,6 +41,35 @@
             <button id="submitPost">Post to Facebook</button>
             <pre id="postResult"></pre>
         </div>
+
+        <div id="imagePostForm" style="display:none;" class="post-form">
+            <h3>Image Post</h3>
+            <select id="imagePageSelect" class="input-field">
+                <option value="">Select a page</option>
+            </select>
+            <div class="image-upload">
+                <input type="file" id="imageUpload" accept="image/*" class="input-field">
+            </div>
+            <textarea id="imageCaption" placeholder="Write a caption..." class="input-field"></textarea>
+            
+            <div class="post-options">
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="imagePostType" value="now" checked> Now
+                    </label>
+                    <label>
+                        <input type="radio" name="imagePostType" value="scheduled"> Later
+                    </label>
+                </div>
+                <div id="imageScheduleTimeWrapper" style="display: none;">
+                    <input type="datetime-local" id="imageScheduledTime" class="input-field">
+                    <p class="schedule-hint">10 min ~ 6 m</p>
+                </div>
+            </div>
+
+            <button id="submitImagePost">Post Image to Facebook</button>
+            <pre id="imagePostResult"></pre>
+        </div>
     </div>
     <script src="/static/script.js"></script>
 </body>

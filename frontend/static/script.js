@@ -11,10 +11,10 @@ document.getElementById("fbConnectBtn").addEventListener("click", () => {
 
 if (fbStatus === "connected" && userId) {
   document.getElementById("statusMessage").innerText = "FB connected";
-
   document.getElementById("fetchFbProfileBtn").style.display = "inline-block";
   document.getElementById("fetchFbPagesBtn").style.display = "inline-block";
   document.getElementById("postForm").style.display = "block";
+  document.getElementById("imagePostForm").style.display = "block";
 }
 
 document.getElementById("fetchFbProfileBtn").addEventListener("click", async () => {
@@ -40,12 +40,16 @@ document.getElementById("fetchFbPagesBtn").addEventListener("click", async () =>
     document.getElementById("statusMessage").innerText = "FB pages:";
     
     const pageSelect = document.getElementById("pageSelect");
+    const imagePageSelect = document.getElementById("imagePageSelect");
     pageSelect.innerHTML = '<option value="">Select a page</option>';
+    imagePageSelect.innerHTML = '<option value="">Select a page</option>';
     data.data.forEach(page => {
-      const option = document.createElement("option");
-      option.value = page.id;
-      option.textContent = page.name;
-      pageSelect.appendChild(option);
+        const option = document.createElement("option");
+        option.value = page.id;
+        option.textContent = page.name;
+        
+        pageSelect.appendChild(option.cloneNode(true));
+        imagePageSelect.appendChild(option.cloneNode(true));
     });
   } catch (e) {
     document.getElementById("statusMessage").innerText = "FB pages error: " + e.message;
@@ -121,7 +125,7 @@ document.getElementById("submitPost").addEventListener("click", async () => {
         const data = await res.json();
         document.getElementById("postResult").innerText = JSON.stringify(data, null, 2);
         document.getElementById("statusMessage").innerText = 
-            postType === 'scheduled' ? "Post scheduled!" : "Post publishied!";
+            postType === 'scheduled' ? "Post scheduled!" : "Post published!";
         
         document.getElementById("postMessage").value = "";
         if (postType === 'scheduled') {
@@ -131,5 +135,96 @@ document.getElementById("submitPost").addEventListener("click", async () => {
         }
     } catch (e) {
         document.getElementById("statusMessage").innerText = "Post error: " + e.message;
+    }
+});
+
+document.querySelectorAll('input[name="imagePostType"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const scheduleWrapper = document.getElementById('imageScheduleTimeWrapper');
+        if (this.value === 'scheduled') {
+            scheduleWrapper.style.display = 'block';
+            const minTime = new Date(Date.now() + 10 * 60 * 1000);
+            const year = minTime.getFullYear();
+            const month = String(minTime.getMonth() + 1).padStart(2, '0');
+            const day = String(minTime.getDate()).padStart(2, '0');
+            const hours = String(minTime.getHours()).padStart(2, '0');
+            const minutes = String(minTime.getMinutes()).padStart(2, '0');
+            const defaultTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+            document.getElementById('imageScheduledTime').value = defaultTime;
+        } else {
+            scheduleWrapper.style.display = 'none';
+        }
+    });
+});
+
+document.getElementById("submitImagePost").addEventListener("click", async () => {
+    const pageId = document.getElementById("imagePageSelect").value;
+    const caption = document.getElementById("imageCaption").value;
+    const postType = document.querySelector('input[name="imagePostType"]:checked').value;
+    const imageFile = document.getElementById("imageUpload").files[0];
+    
+    if (!pageId) {
+        alert("Select a page");
+        return;
+    }
+    
+    if (!imageFile) {
+        alert("Select an image");
+        return;
+    }
+    
+    let formData = new FormData();
+    formData.append('image', imageFile);
+    
+    let endpoint = `/facebook/pages/${pageId}/photos?user_id=${userId}`;
+    if (caption && caption.trim()) {
+        endpoint += `&caption=${encodeURIComponent(caption.trim())}`;
+    }
+    
+    if (postType === 'scheduled') {
+        const scheduledTime = document.getElementById("imageScheduledTime").value;
+        if (!scheduledTime) {
+            alert("Plan a scheduled time");
+            return;
+        }
+        
+        const scheduledTimestamp = Math.floor(new Date(scheduledTime).getTime() / 1000);
+        const now = Math.floor(Date.now() / 1000);
+        
+        if (scheduledTimestamp < now + 600) {
+            alert("At least 10min later");
+            return;
+        }
+        
+        if (scheduledTimestamp > now + 180 * 24 * 3600) {
+            alert("At most 180 days before");
+            return;
+        }
+        
+        endpoint += `&scheduled_time=${scheduledTimestamp}`;
+    }
+    
+    document.getElementById("statusMessage").innerText = "Uploading...";
+    try {
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        document.getElementById("imagePostResult").innerText = JSON.stringify(data, null, 2);
+        document.getElementById("statusMessage").innerText = 
+            postType === 'scheduled' ? "Image scheduled!" : "Image uploaded!";
+        
+        document.getElementById("imageCaption").value = "";
+        document.getElementById("imageUpload").value = "";
+        if (postType === 'scheduled') {
+            document.getElementById("imageScheduledTime").value = "";
+            document.querySelector('input[value="now"]').checked = true;
+            document.getElementById("imageScheduleTimeWrapper").style.display = 'none';
+        }
+    } catch (e) {
+        document.getElementById("statusMessage").innerText = "Upload error: " + e.message;
     }
 });

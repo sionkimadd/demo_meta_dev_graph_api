@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import os
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File
 from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -121,6 +121,61 @@ async def create_page_post(page_id: str, user_id: str, message: str, scheduled_t
         post_params["published"] = False
     
     post_res = requests.post(f"https://graph.facebook.com/v22.0/{page_id}/feed", params=post_params)
+    if not post_res.ok:
+        raise HTTPException(status_code=post_res.status_code, detail=post_res.text)
+    
+    return JSONResponse(post_res.json())
+
+@app.post("/facebook/pages/{page_id}/photos")
+async def create_page_post_with_photos(page_id: str, user_id: str, image: UploadFile = File(...), caption: str = None, scheduled_time: int = None):
+    allowed_extensions = {'.jpg', '.jpeg', '.png', '.gif'}
+    file_extension = os.path.splitext(image.filename)[1].lower()
+    if file_extension not in allowed_extensions:
+        raise HTTPException(status_code=400, detail="jpg, jpeg, png, gif only")
+
+    page_doc_ref = (
+        db.collection("users")
+        .document(user_id)
+        .collection("fb_pages")
+        .document(page_id)
+    )
+    page_doc = page_doc_ref.get()
+    if not page_doc.exists:
+        raise HTTPException(status_code=404, detail="Not found fb_pages")
+    
+    page_token = page_doc.to_dict().get("page_token")
+    decrpted_token = fernet.decrypt(page_token.encode()).decode()
+    
+    temp_file_path = f"temp_{image.filename}"
+    with open(temp_file_path, "wb") as buffer:
+        content = await image.read()
+        buffer.write(content)
+    
+    with open(temp_file_path, 'rb') as file:
+        mime_type = {
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.gif': 'image/gif'
+        }[file_extension]
+        
+        files = {
+            'source': (image.filename, file, mime_type)
+        }
+        post_params = {
+            "access_token": decrpted_token
+        }
+        if caption:
+            post_params["caption"] = caption
+        
+        if scheduled_time:
+            post_params["scheduled_publish_time"] = scheduled_time
+            post_params["published"] = False
+        
+        post_res = requests.post(f"https://graph.facebook.com/v22.0/{page_id}/photos", params=post_params, files=files)
+    
+    os.remove(temp_file_path)
+    
     if not post_res.ok:
         raise HTTPException(status_code=post_res.status_code, detail=post_res.text)
     

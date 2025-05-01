@@ -83,3 +83,23 @@ textarea.input-field {
     color: #666;
     margin-top: 5px;
 }
+
+.image-upload {
+    margin: 10px 0;
+}
+
+.image-upload input[type="file"] {
+    padding: 5px;
+    width: 100%;
+}
+
+#imagePostForm {
+    margin-top: 30px;
+    border-top: 2px solid #ddd;
+    padding-top: 30px;
+}
+
+#imagePostForm h3 {
+    margin-bottom: 20px;
+    color: #1877f2;
+}
