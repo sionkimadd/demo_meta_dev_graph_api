@@ -93,13 +93,13 @@ textarea.input-field {
     width: 100%;
 }
 
-#imagePostForm {
+#imagePostForm, #videoPostForm {
     margin-top: 30px;
     border-top: 2px solid #ddd;
     padding-top: 30px;
 }
 
-#imagePostForm h3 {
+#imagePostForm h3, #videoPostForm h3 {
     margin-bottom: 20px;
     color: #1877f2;
 }
@@ -135,12 +135,12 @@ textarea.input-field {
     opacity: 0.9;
 }
 
-#regenerateBtn, #regenerateImageBtn {
+#regenerateBtn, #regenerateImageBtn, #regenerateVideoBtn {
     background-color: #6c757d;
     color: white;
 }
 
-#useGeneratedBtn, #useGeneratedImageBtn {
+#useGeneratedBtn, #useGeneratedImageBtn, #useGeneratedVideoBtn {
     background-color: #28a745;
     color: white;
 }

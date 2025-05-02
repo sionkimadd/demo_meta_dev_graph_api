@@ -136,7 +136,35 @@
                 <input type="file" id="videoUpload" accept="video/*" class="input-field">
             </div>
             <input type="text" id="videoTitle" placeholder="Video title..." class="input-field" required>
-            <textarea id="videoDescription" placeholder="Write a description..." class="input-field"></textarea>
+            
+            <div class="message-type">
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="videoMessageType" value="manual" checked> Manual Input
+                    </label>
+                    <label>
+                        <input type="radio" name="videoMessageType" value="ai"> AI Generation
+                    </label>
+                </div>
+            </div>
+
+            <div id="videoManualInput">
+                <textarea id="videoDescription" placeholder="Write a description..." class="input-field" rows="4"></textarea>
+            </div>
+
+            <div id="videoAiInput" style="display: none;">
+                <input type="text" id="videoKeywordInput" placeholder="Enter keywords..." class="input-field">
+                <button id="generateVideoDescription" class="generate-btn">Generate Description</button>
+                <div id="generatedVideoContent" style="display: none;" class="generated-text-container">
+                    <div class="form-group">
+                        <textarea id="generatedVideoDescription" class="input-field" rows="4" readonly></textarea>
+                    </div>
+                    <div class="button-group">
+                        <button id="regenerateVideoBtn" class="action-btn">Regenerate</button>
+                        <button id="useGeneratedVideoBtn" class="action-btn">Use</button>
+                    </div>
+                </div>
+            </div>
             
             <div class="post-options">
                 <div class="radio-group">

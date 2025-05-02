@@ -274,7 +274,15 @@ document.querySelectorAll('input[name="videoPostType"]').forEach(radio => {
 document.getElementById("submitVideoPost").addEventListener("click", async () => {
     const pageId = document.getElementById("videoPageSelect").value;
     const title = document.getElementById("videoTitle").value;
-    const description = document.getElementById("videoDescription").value;
+    const messageType = document.querySelector('input[name="videoMessageType"]:checked').value;
+    let description;
+    
+    if (messageType === 'ai') {
+        description = document.getElementById('generatedVideoDescription').value;
+    } else {
+        description = document.getElementById("videoDescription").value;
+    }
+    
     const postType = document.querySelector('input[name="videoPostType"]:checked').value;
     const videoFile = document.getElementById("videoUpload").files[0];
     
@@ -366,6 +374,20 @@ document.querySelectorAll('input[name="imageMessageType"]').forEach(radio => {
     radio.addEventListener('change', function() {
         const manualInput = document.getElementById('imageManualInput');
         const aiInput = document.getElementById('imageAiInput');
+        if (this.value === 'manual') {
+            manualInput.style.display = 'block';
+            aiInput.style.display = 'none';
+        } else {
+            manualInput.style.display = 'none';
+            aiInput.style.display = 'block';
+        }
+    });
+});
+
+document.querySelectorAll('input[name="videoMessageType"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const manualInput = document.getElementById('videoManualInput');
+        const aiInput = document.getElementById('videoAiInput');
         if (this.value === 'manual') {
             manualInput.style.display = 'block';
             aiInput.style.display = 'none';
@@ -504,4 +526,69 @@ document.getElementById('useGeneratedImageBtn').addEventListener('click', functi
     document.querySelector('input[name="imageMessageType"][value="manual"]').checked = true;
     document.getElementById('imageManualInput').style.display = 'block';
     document.getElementById('imageAiInput').style.display = 'none';
+});
+
+document.getElementById('generateVideoDescription').addEventListener('click', async function() {
+    const keyword = document.getElementById('videoKeywordInput').value;
+    if (!keyword) {
+        alert('Please enter keywords.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/generate-caption', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `keyword=${encodeURIComponent(keyword)}`
+        });
+
+        if (!response.ok) {
+            throw new Error('Generation failed.');
+        }
+
+        const data = await response.json();
+        const generatedText = `${data.caption}\n\n${data.hashtags}`;
+        document.getElementById('generatedVideoDescription').value = generatedText;
+        document.getElementById('generatedVideoContent').style.display = 'block';
+    } catch (error) {
+        alert(error.message);
+    }
+});
+
+document.getElementById('regenerateVideoBtn').addEventListener('click', async function() {
+    const keyword = document.getElementById('videoKeywordInput').value;
+    if (!keyword) {
+        alert('Please enter keywords.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/generate-caption', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `keyword=${encodeURIComponent(keyword)}`
+        });
+
+        if (!response.ok) {
+            throw new Error('Generation failed.');
+        }
+
+        const data = await response.json();
+        const generatedText = `${data.caption}\n\n${data.hashtags}`;
+        document.getElementById('generatedVideoDescription').value = generatedText;
+    } catch (error) {
+        alert(error.message);
+    }
+});
+
+document.getElementById('useGeneratedVideoBtn').addEventListener('click', function() {
+    const generatedText = document.getElementById('generatedVideoDescription').value;
+    document.getElementById('videoDescription').value = generatedText;
+    document.querySelector('input[name="videoMessageType"][value="manual"]').checked = true;
+    document.getElementById('videoManualInput').style.display = 'block';
+    document.getElementById('videoAiInput').style.display = 'none';
 });
