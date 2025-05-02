@@ -1,8 +1,5 @@
 from typing import Optional
 from dotenv import load_dotenv
-
-load_dotenv()
-
 import os
 from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form
 from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
@@ -12,6 +9,12 @@ import requests
 from backend import auth_utils
 from backend.firestore_client import db
 from cryptography.fernet import Fernet
+from backend.ai_generator import generate_caption_and_hashtags
+
+load_dotenv()
+
+os.environ["GOOGLE_CLOUD_PROJECT"] = os.getenv("GCP_PROJECT_ID")
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GCP_CREDENTIALS_PATH")
 
 app = FastAPI()
 
@@ -35,7 +38,7 @@ async def facebook_callback(request: Request):
     code = request.query_params.get("code")
     state = request.query_params.get("state")
     if not auth_utils.validate_state(state):
-        raise HTMLResponse("<h3>CSRF 실패<h3>", status_code=403)
+        raise HTMLResponse("<h3>CSRF Failed<h3>", status_code=403)
     user_id = await auth_utils.generate_user_token_n_id(code)
     return RedirectResponse(f"/?status=connected&user_id={user_id}")
 
@@ -248,3 +251,14 @@ async def upload_facebook_video(
         raise HTTPException(status_code=response.status_code, detail=response.text)
 
     return JSONResponse(response.json())
+
+@app.post("/generate-caption")
+async def generate_caption(keyword: str = Form(...)):
+    try:
+        caption, hashtags = generate_caption_and_hashtags(keyword)
+        return JSONResponse({
+            "caption": caption,
+            "hashtags": hashtags
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

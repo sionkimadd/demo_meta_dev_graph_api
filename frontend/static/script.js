@@ -6,58 +6,58 @@ const fbStatus = urlParams.get("status");
 const userId = urlParams.get("user_id");
 
 document.getElementById("fbConnectBtn").addEventListener("click", () => {
-  window.location.href = "/auth/facebook";
+    window.location.href = "/auth/facebook";
 });
 
 if (fbStatus === "connected" && userId) {
-  document.getElementById("statusMessage").innerText = "FB connected";
-  document.getElementById("fetchFbProfileBtn").style.display = "inline-block";
-  document.getElementById("fetchFbPagesBtn").style.display = "inline-block";
-  document.getElementById("postForm").style.display = "block";
-  document.getElementById("imagePostForm").style.display = "block";
-  document.getElementById("videoPostForm").style.display = "block";
+    document.getElementById("statusMessage").innerText = "FB connected";
+    document.getElementById("fetchFbProfileBtn").style.display = "inline-block";
+    document.getElementById("fetchFbPagesBtn").style.display = "inline-block";
+    document.getElementById("postForm").style.display = "block";
+    document.getElementById("imagePostForm").style.display = "block";
+    document.getElementById("videoPostForm").style.display = "block";
 }
 
 document.getElementById("fetchFbProfileBtn").addEventListener("click", async () => {
-  document.getElementById("statusMessage").innerText = "Loading FB profile...";
-  try {
-    const res = await fetch(`/facebook/profile?user_id=${userId}`);
-    if (!res.ok) throw new Error(await res.text());
-    const data = await res.json();
-    document.getElementById("fbProfileOutput").innerText = JSON.stringify(data, null, 2);
-    document.getElementById("statusMessage").innerText = "FB profile:";
-  } catch (e) {
-    document.getElementById("statusMessage").innerText = "FB profile error: " + e.message;
-  }
+    document.getElementById("statusMessage").innerText = "Loading FB profile...";
+        try {
+        const res = await fetch(`/facebook/profile?user_id=${userId}`);
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        document.getElementById("fbProfileOutput").innerText = JSON.stringify(data, null, 2);
+        document.getElementById("statusMessage").innerText = "FB profile:";
+    } catch (e) {
+        document.getElementById("statusMessage").innerText = "FB profile error: " + e.message;
+    }
 });
 
 document.getElementById("fetchFbPagesBtn").addEventListener("click", async () => {
-  document.getElementById("statusMessage").innerText = "Loading FB pages...";
-  try {
-    const res = await fetch(`/facebook/pages?user_id=${userId}`);
-    if (!res.ok) throw new Error(await res.text());
-    const data = await res.json();
-    document.getElementById("fbPagesOutput").innerText = JSON.stringify(data, null, 2);
-    document.getElementById("statusMessage").innerText = "FB pages:";
-    
-    const pageSelect = document.getElementById("pageSelect");
-    const imagePageSelect = document.getElementById("imagePageSelect");
-    const videoPageSelect = document.getElementById("videoPageSelect");
-    pageSelect.innerHTML = '<option value="">Select a page</option>';
-    imagePageSelect.innerHTML = '<option value="">Select a page</option>';
-    videoPageSelect.innerHTML = '<option value="">Select a page</option>';
-    data.data.forEach(page => {
-        const option = document.createElement("option");
-        option.value = page.id;
-        option.textContent = page.name;
-        
-        pageSelect.appendChild(option.cloneNode(true));
-        imagePageSelect.appendChild(option.cloneNode(true));
-        videoPageSelect.appendChild(option.cloneNode(true));
-    });
-  } catch (e) {
-    document.getElementById("statusMessage").innerText = "FB pages error: " + e.message;
-  }
+    document.getElementById("statusMessage").innerText = "Loading FB pages...";
+    try {
+        const res = await fetch(`/facebook/pages?user_id=${userId}`);
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        document.getElementById("fbPagesOutput").innerText = JSON.stringify(data, null, 2);
+        document.getElementById("statusMessage").innerText = "FB pages:";
+
+        const pageSelect = document.getElementById("pageSelect");
+        const imagePageSelect = document.getElementById("imagePageSelect");
+        const videoPageSelect = document.getElementById("videoPageSelect");
+        pageSelect.innerHTML = '<option value="">Select a page</option>';
+        imagePageSelect.innerHTML = '<option value="">Select a page</option>';
+        videoPageSelect.innerHTML = '<option value="">Select a page</option>';
+        data.data.forEach(page => {
+            const option = document.createElement("option");
+            option.value = page.id;
+            option.textContent = page.name;
+            
+            pageSelect.appendChild(option.cloneNode(true));
+            imagePageSelect.appendChild(option.cloneNode(true));
+            videoPageSelect.appendChild(option.cloneNode(true));
+        });
+    } catch (e) {
+        document.getElementById("statusMessage").innerText = "FB pages error: " + e.message;
+    }
 });
 
 document.querySelectorAll('input[name="postType"]').forEach(radio => {
@@ -81,8 +81,14 @@ document.querySelectorAll('input[name="postType"]').forEach(radio => {
 
 document.getElementById("submitPost").addEventListener("click", async () => {
     const pageId = document.getElementById("pageSelect").value;
-    const message = document.getElementById("postMessage").value;
-    const postType = document.querySelector('input[name="postType"]:checked').value;
+    const messageType = document.querySelector('input[name="messageType"]:checked').value;
+    let message;
+    
+    if (messageType === 'ai') {
+        message = document.getElementById('generatedMessage').value;
+    } else {
+        message = document.getElementById('postMessage').value;
+    }
     
     if (!pageId) {
         alert("Select a page");
@@ -99,6 +105,7 @@ document.getElementById("submitPost").addEventListener("click", async () => {
     
     let endpoint = `/facebook/pages/${pageId}/feed?user_id=${userId}`;
     
+    const postType = document.querySelector('input[name="postType"]:checked').value;
     if (postType === 'scheduled') {
         const scheduledTime = document.getElementById("scheduledTime").value;
         if (!scheduledTime) {
@@ -167,8 +174,15 @@ document.querySelectorAll('input[name="imagePostType"]').forEach(radio => {
 
 document.getElementById("submitImagePost").addEventListener("click", async () => {
     const pageId = document.getElementById("imagePageSelect").value;
-    const caption = document.getElementById("imageCaption").value;
-    const postType = document.querySelector('input[name="imagePostType"]:checked').value;
+    const messageType = document.querySelector('input[name="imageMessageType"]:checked').value;
+    let caption;
+    
+    if (messageType === 'ai') {
+        caption = document.getElementById('generatedImageCaption').value;
+    } else {
+        caption = document.getElementById('imageCaption').value;
+    }
+    
     const imageFile = document.getElementById("imageUpload").files[0];
     
     if (!pageId) {
@@ -189,6 +203,7 @@ document.getElementById("submitImagePost").addEventListener("click", async () =>
     
     let endpoint = `/facebook/pages/${pageId}/photos?user_id=${userId}`;
     
+    const postType = document.querySelector('input[name="imagePostType"]:checked').value;
     if (postType === 'scheduled') {
         const scheduledTime = document.getElementById("imageScheduledTime").value;
         if (!scheduledTime) {
@@ -331,4 +346,162 @@ document.getElementById("submitVideoPost").addEventListener("click", async () =>
     } catch (e) {
         document.getElementById("statusMessage").innerText = "Video upload error: " + e.message;
     }
+});
+
+document.querySelectorAll('input[name="messageType"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const manualInput = document.getElementById('manualInput');
+        const aiInput = document.getElementById('aiInput');
+        if (this.value === 'manual') {
+            manualInput.style.display = 'block';
+            aiInput.style.display = 'none';
+        } else {
+            manualInput.style.display = 'none';
+            aiInput.style.display = 'block';
+        }
+    });
+});
+
+document.querySelectorAll('input[name="imageMessageType"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const manualInput = document.getElementById('imageManualInput');
+        const aiInput = document.getElementById('imageAiInput');
+        if (this.value === 'manual') {
+            manualInput.style.display = 'block';
+            aiInput.style.display = 'none';
+        } else {
+            manualInput.style.display = 'none';
+            aiInput.style.display = 'block';
+        }
+    });
+});
+
+document.getElementById('generateCaption').addEventListener('click', async function() {
+    const keyword = document.getElementById('keywordInput').value;
+    if (!keyword) {
+        alert('Please enter keywords.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/generate-caption', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `keyword=${encodeURIComponent(keyword)}`
+        });
+
+        if (!response.ok) {
+            throw new Error('Generation failed.');
+        }
+
+        const data = await response.json();
+        const generatedText = `${data.caption}\n\n${data.hashtags}`;
+        document.getElementById('generatedMessage').value = generatedText;
+        document.getElementById('generatedContent').style.display = 'block';
+    } catch (error) {
+        alert(error.message);
+    }
+});
+
+document.getElementById('regenerateBtn').addEventListener('click', async function() {
+    const keyword = document.getElementById('keywordInput').value;
+    if (!keyword) {
+        alert('Please enter keywords.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/generate-caption', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `keyword=${encodeURIComponent(keyword)}`
+        });
+
+        if (!response.ok) {
+            throw new Error('Generation failed.');
+        }
+
+        const data = await response.json();
+        const generatedText = `${data.caption}\n\n${data.hashtags}`;
+        document.getElementById('generatedMessage').value = generatedText;
+    } catch (error) {
+        alert(error.message);
+    }
+});
+
+document.getElementById('useGeneratedBtn').addEventListener('click', function() {
+    const generatedText = document.getElementById('generatedMessage').value;
+    document.getElementById('postMessage').value = generatedText;
+    document.querySelector('input[name="messageType"][value="manual"]').checked = true;
+    document.getElementById('manualInput').style.display = 'block';
+    document.getElementById('aiInput').style.display = 'none';
+});
+
+document.getElementById('generateImageCaption').addEventListener('click', async function() {
+    const keyword = document.getElementById('imageKeywordInput').value;
+    if (!keyword) {
+        alert('Please enter keywords.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/generate-caption', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `keyword=${encodeURIComponent(keyword)}`
+        });
+
+        if (!response.ok) {
+            throw new Error('Generation failed.');
+        }
+
+        const data = await response.json();
+        const generatedText = `${data.caption}\n\n${data.hashtags}`;
+        document.getElementById('generatedImageCaption').value = generatedText;
+        document.getElementById('generatedImageContent').style.display = 'block';
+    } catch (error) {
+        alert(error.message);
+    }
+});
+
+document.getElementById('regenerateImageBtn').addEventListener('click', async function() {
+    const keyword = document.getElementById('imageKeywordInput').value;
+    if (!keyword) {
+        alert('Please enter keywords.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/generate-caption', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `keyword=${encodeURIComponent(keyword)}`
+        });
+
+        if (!response.ok) {
+            throw new Error('Generation failed.');
+        }
+
+        const data = await response.json();
+        const generatedText = `${data.caption}\n\n${data.hashtags}`;
+        document.getElementById('generatedImageCaption').value = generatedText;
+    } catch (error) {
+        alert(error.message);
+    }
+});
+
+document.getElementById('useGeneratedImageBtn').addEventListener('click', function() {
+    const generatedText = document.getElementById('generatedImageCaption').value;
+    document.getElementById('imageCaption').value = generatedText;
+    document.querySelector('input[name="imageMessageType"][value="manual"]').checked = true;
+    document.getElementById('imageManualInput').style.display = 'block';
+    document.getElementById('imageAiInput').style.display = 'none';
 });

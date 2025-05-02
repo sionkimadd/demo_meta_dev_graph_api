@@ -21,7 +21,35 @@
             <select id="pageSelect" class="input-field">
                 <option value="">Select a page</option>
             </select>
-            <textarea id="postMessage" placeholder="message..." class="input-field"></textarea>
+            
+            <div class="message-type">
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="messageType" value="manual" checked> Manual Input
+                    </label>
+                    <label>
+                        <input type="radio" name="messageType" value="ai"> AI Generation
+                    </label>
+                </div>
+            </div>
+
+            <div id="manualInput">
+                <textarea id="postMessage" placeholder="message..." class="input-field"></textarea>
+            </div>
+
+            <div id="aiInput" style="display: none;">
+                <input type="text" id="keywordInput" placeholder="Enter keywords..." class="input-field">
+                <button id="generateCaption" class="generate-btn">Generate</button>
+                <div id="generatedContent" style="display: none;">
+                    <div class="generated-text-container">
+                        <textarea id="generatedMessage" class="input-field" readonly></textarea>
+                    </div>
+                    <div class="button-group">
+                        <button id="regenerateBtn" class="action-btn">Regenerate</button>
+                        <button id="useGeneratedBtn" class="action-btn">Use</button>
+                    </div>
+                </div>
+            </div>
             
             <div class="post-options">
                 <div class="radio-group">
@@ -50,7 +78,35 @@
             <div class="image-upload">
                 <input type="file" id="imageUpload" accept="image/*" class="input-field">
             </div>
-            <textarea id="imageCaption" placeholder="Write a caption..." class="input-field"></textarea>
+
+            <div class="message-type">
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="imageMessageType" value="manual" checked> Manual Input
+                    </label>
+                    <label>
+                        <input type="radio" name="imageMessageType" value="ai"> AI Generation
+                    </label>
+                </div>
+            </div>
+
+            <div id="imageManualInput">
+                <textarea id="imageCaption" placeholder="Write a caption..." class="input-field"></textarea>
+            </div>
+
+            <div id="imageAiInput" style="display: none;">
+                <input type="text" id="imageKeywordInput" placeholder="Enter keywords..." class="input-field">
+                <button id="generateImageCaption" class="generate-btn">Generate</button>
+                <div id="generatedImageContent" style="display: none;">
+                    <div class="generated-text-container">
+                        <textarea id="generatedImageCaption" class="input-field" readonly></textarea>
+                    </div>
+                    <div class="button-group">
+                        <button id="regenerateImageBtn" class="action-btn">Regenerate</button>
+                        <button id="useGeneratedImageBtn" class="action-btn">Use</button>
+                    </div>
+                </div>
+            </div>
             
             <div class="post-options">
                 <div class="radio-group">
