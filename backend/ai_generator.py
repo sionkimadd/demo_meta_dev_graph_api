@@ -34,34 +34,43 @@ def generate_caption_and_hashtags(keyword: str) -> tuple[str, str]:
         raise Exception(f"Failed to generate caption: {str(e)}")
 
 def generate_img(user_prompt: str, output_dir: Optional[str] = "./tmp") -> str:
+    import base64
+    import os
+    import replicate
+
     os.makedirs(output_dir, exist_ok=True)
 
-    prompt = (
-        f"Aesthetic and artistic photo of {user_prompt}, "
-        f"vibrant colors, dreamy style, Instagram trending, 4K"
-    )
-
     input = {
-        "prompt": prompt,
-        "scheduler": "K_EULER"
+        "size": "1365x1024",
+        "prompt": user_prompt
     }
 
-    output = replicate.run(
-        "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4",
-        input=input
-    )
+    try:
+        output = replicate.run(
+            "recraft-ai/recraft-v3",
+            input=input
+        )
 
-    filename = f"{uuid.uuid4().hex}.png"
-    file_path = os.path.join(output_dir, filename)
+        if hasattr(output, "read"):
+            file_bytes = output.read()
+        elif isinstance(output, (list, tuple)):
+            first = output[0]
+            if hasattr(first, "read"):
+                file_bytes = first.read()
+            else:
+                import requests
+                response = requests.get(first)
+                file_bytes = response.content
+        elif hasattr(output, "__iter__"):
+            first = next(iter(output))
+            if hasattr(first, "read"):
+                file_bytes = first.read()
+            else:
+                import requests
+                response = requests.get(first)
+                file_bytes = response.content
 
-    for item in output:
-        with open(file_path, "wb") as f:
-            f.write(item.read())
-
-    import base64
-    with open(file_path, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-    
-    os.remove(file_path)
-    
-    return f"data:image/png;base64,{encoded_string}"
+        encoded_string = base64.b64encode(file_bytes).decode('utf-8')
+        return f"data:image/webp;base64,{encoded_string}"
+    except Exception:
+        raise
