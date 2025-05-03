@@ -77,6 +77,32 @@
             </select>
             <div class="image-upload">
                 <input type="file" id="imageUpload" accept="image/*" class="input-field">
+                <div id="uploadedImagePreview" style="display: none; margin-top: 10px;">
+                    <img id="uploadedImage" style="max-width: 100%;">
+                </div>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="imageSource" value="upload" checked> Upload Image
+                    </label>
+                    <label>
+                        <input type="radio" name="imageSource" value="generate"> Generate Image
+                    </label>
+                </div>
+                <div id="imageGenerateInput" style="display: none;">
+                    <input type="text" id="imageGenerateKeyword" placeholder="Enter keywords to generate image..." class="input-field">
+                    <button id="generateImageBtn" class="generate-btn">Generate Image</button>
+                    <div id="loadingImageSpinner" class="loading-spinner" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>Generating image...</p>
+                    </div>
+                    <div id="generatedImageContainer" style="display: none;">
+                        <img id="generatedImage" style="max-width: 100%; margin-top: 10px;">
+                        <div class="button-group">
+                            <button id="regenerateImageBtn" class="action-btn">Regenerate</button>
+                            <button id="useGeneratedImageBtn" class="action-btn">Use</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="message-type">
@@ -102,9 +128,13 @@
                         <textarea id="generatedImageCaption" class="input-field" readonly></textarea>
                     </div>
                     <div class="button-group">
-                        <button id="regenerateImageBtn" class="action-btn">Regenerate</button>
-                        <button id="useGeneratedImageBtn" class="action-btn">Use</button>
+                        <button id="regenerateImageCaptionBtn" class="action-btn">Regenerate</button>
+                        <button id="useGeneratedImageCaptionBtn" class="action-btn">Use</button>
                     </div>
+                </div>
+                <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Generating...</p>
                 </div>
             </div>
             

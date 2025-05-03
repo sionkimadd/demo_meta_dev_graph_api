@@ -470,6 +470,10 @@ document.getElementById('generateImageCaption').addEventListener('click', async 
         return;
     }
 
+    document.getElementById('loadingSpinner').style.display = 'flex';
+    document.getElementById('generatedImageContent').style.display = 'none';
+    document.getElementById('generateImageCaption').disabled = true;
+
     try {
         const response = await fetch('/generate-caption', {
             method: 'POST',
@@ -489,15 +493,22 @@ document.getElementById('generateImageCaption').addEventListener('click', async 
         document.getElementById('generatedImageContent').style.display = 'block';
     } catch (error) {
         alert(error.message);
+    } finally {
+        document.getElementById('loadingSpinner').style.display = 'none';
+        document.getElementById('generateImageCaption').disabled = false;
     }
 });
 
-document.getElementById('regenerateImageBtn').addEventListener('click', async function() {
+document.getElementById('regenerateImageCaptionBtn').addEventListener('click', async function() {
     const keyword = document.getElementById('imageKeywordInput').value;
     if (!keyword) {
         alert('Please enter keywords.');
         return;
     }
+
+    document.getElementById('loadingSpinner').style.display = 'flex';
+    document.getElementById('generatedImageContent').style.display = 'none';
+    document.getElementById('regenerateImageCaptionBtn').disabled = true;
 
     try {
         const response = await fetch('/generate-caption', {
@@ -515,12 +526,16 @@ document.getElementById('regenerateImageBtn').addEventListener('click', async fu
         const data = await response.json();
         const generatedText = `${data.caption}\n\n${data.hashtags}`;
         document.getElementById('generatedImageCaption').value = generatedText;
+        document.getElementById('generatedImageContent').style.display = 'block';
     } catch (error) {
         alert(error.message);
+    } finally {
+        document.getElementById('loadingSpinner').style.display = 'none';
+        document.getElementById('regenerateImageCaptionBtn').disabled = false;
     }
 });
 
-document.getElementById('useGeneratedImageBtn').addEventListener('click', function() {
+document.getElementById('useGeneratedImageCaptionBtn').addEventListener('click', function() {
     const generatedText = document.getElementById('generatedImageCaption').value;
     document.getElementById('imageCaption').value = generatedText;
     document.querySelector('input[name="imageMessageType"][value="manual"]').checked = true;
@@ -591,4 +606,105 @@ document.getElementById('useGeneratedVideoBtn').addEventListener('click', functi
     document.querySelector('input[name="videoMessageType"][value="manual"]').checked = true;
     document.getElementById('videoManualInput').style.display = 'block';
     document.getElementById('videoAiInput').style.display = 'none';
+});
+
+document.querySelectorAll('input[name="imageSource"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const imageUpload = document.getElementById('imageUpload');
+        const imageGenerateInput = document.getElementById('imageGenerateInput');
+        if (this.value === 'upload') {
+            imageUpload.style.display = 'block';
+            imageGenerateInput.style.display = 'none';
+        } else {
+            imageUpload.style.display = 'none';
+            imageGenerateInput.style.display = 'block';
+        }
+    });
+});
+
+document.getElementById('generateImageBtn').addEventListener('click', async function() {
+    const keyword = document.getElementById('imageGenerateKeyword').value;
+    if (!keyword) {
+        alert('Please enter keywords to generate an image.');
+        return;
+    }
+
+    document.getElementById('loadingImageSpinner').style.display = 'flex';
+    document.getElementById('generatedImageContainer').style.display = 'none';
+    document.getElementById('generateImageBtn').disabled = true;
+
+    try {
+        const response = await fetch('/generate-image', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `keyword=${encodeURIComponent(keyword)}`
+        });
+
+        if (!response.ok) {
+            throw new Error('Image generation failed.');
+        }
+
+        const data = await response.json();
+        const generatedImage = document.getElementById('generatedImage');
+        generatedImage.src = data.image_url;
+        document.getElementById('generatedImageContainer').style.display = 'block';
+    } catch (error) {
+        alert(error.message);
+    } finally {
+        document.getElementById('loadingImageSpinner').style.display = 'none';
+        document.getElementById('generateImageBtn').disabled = false;
+    }
+});
+
+document.getElementById('regenerateImageBtn').addEventListener('click', function() {
+    const keyword = document.getElementById('imageGenerateKeyword').value;
+    if (keyword) {
+        document.getElementById('generateImageBtn').click();
+    }
+});
+
+document.getElementById('useGeneratedImageBtn').addEventListener('click', function() {
+    const generatedImage = document.getElementById('generatedImage');
+    const imageUpload = document.getElementById('imageUpload');
+    const uploadedImage = document.getElementById('uploadedImage');
+    
+    fetch(generatedImage.src)
+        .then(response => response.blob())
+        .then(blob => {
+            const file = new File([blob], 'generated_image.png', { type: 'image/png' });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            imageUpload.files = dataTransfer.files;
+            
+            uploadedImage.src = generatedImage.src;
+            document.getElementById('uploadedImagePreview').style.display = 'block';
+            
+            document.querySelector('input[name="imageSource"][value="upload"]').checked = true;
+            document.getElementById('imageUpload').style.display = 'block';
+            document.getElementById('imageGenerateInput').style.display = 'none';
+            
+            document.querySelector('input[name="imageMessageType"][value="manual"]').checked = true;
+            document.getElementById('imageManualInput').style.display = 'block';
+            document.getElementById('imageAiInput').style.display = 'none';
+        })
+        .catch(error => {
+            alert('Failed to use generated image: ' + error.message);
+        });
+});
+
+document.getElementById('imageUpload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('uploadedImage');
+            preview.src = e.target.result;
+            document.getElementById('uploadedImagePreview').style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+    } else {
+        document.getElementById('uploadedImagePreview').style.display = 'none';
+    }
 });

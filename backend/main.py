@@ -9,7 +9,7 @@ import requests
 from backend import auth_utils
 from backend.firestore_client import db
 from cryptography.fernet import Fernet
-from backend.ai_generator import generate_caption_and_hashtags
+from backend.ai_generator import generate_caption_and_hashtags, generate_img
 
 load_dotenv()
 
@@ -260,5 +260,13 @@ async def generate_caption(keyword: str = Form(...)):
             "caption": caption,
             "hashtags": hashtags
         })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/generate-image")
+async def generate_image(keyword: str = Form(...)):
+    try:
+        image_url = generate_img(keyword)
+        return JSONResponse({"image_url": image_url})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
